@@ -13,7 +13,7 @@ A simple tool that uses [Esoteric Skeleton Viewers](https://en.esotericsoftware.
     ```
     pip install UnityPy PyQt6 requests
     ```
-    Hit Enter to start the installation.
+    Hit Enter to install.
   
   
 

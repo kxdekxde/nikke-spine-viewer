@@ -1,5 +1,5 @@
 # NIKKE Spine Viewer
-A simple tool that uses [Esoteric Skeleton Viewers](https://en.esotericsoftware.com/spine-skeleton-viewer) to view Spine animations of the game [NIKKE](https://nikke-en.com/).
+A simple tool that uses [Esoteric Skeleton Viewers](https://en.esotericsoftware.com/spine-skeleton-viewer) to view Spine animations of the game [NIKKE](https://nikke-en.com/) or any other compatible game that uses Spine.
 
 
 

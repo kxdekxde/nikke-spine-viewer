@@ -40,7 +40,7 @@ A simple tool that uses [Esoteric Skeleton Viewers](https://en.esotericsoftware.
 
 ### Buttons:
 
-`Preview`: Launch the corresponding skeleton viewer version to see the Spine animation.
+`Preview`: Open the corresponding skeleton viewer version to see the Spine animation.
 
 `Refresh Mods List`: If you renamed, moved or deleted the mods then use this button to refresh the mods list to show the changes.
 

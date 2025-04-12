@@ -1,0 +1,246 @@
+ID,CHARACTER
+c010,Rapi
+c011,Neon
+c012,Anis
+c013,Marian
+c014,Neon Blue Ocean
+c015,Anis Sparkling Summer
+c016,Rapi Red Hood
+c020,Delta
+c022,Signal
+c030,Poli
+c032,Miranda
+c033,Quiry
+c040,D
+c041,K
+c043,D Killer Wife
+c053,Liqueur
+c060,Belorta
+c061,Mica
+c062,Mica Snow Buddy
+c070,Brid
+c071,Soline
+c072,Diesel
+c080,Centi
+c081,Acre
+c082,Liter
+c090,Emma
+c091,Vesti
+c092,Eunhwa
+c093,Emma NPC
+c094,Vesti NPC
+c095,Eunhwa NPC
+c100,Laplace
+c101,Drake
+c102,Maxwell
+c110,Crow
+c111,Jackal
+c112,Viper
+c120,N102
+c121,Miracle Fairy Anne
+c130,Mary
+c131,Pepper
+c132,Mary Bay Goddess
+c140,Sugar
+c141,Milk
+c142,Frima
+c150,Julia
+c151,Pia
+c152,Forte
+c160,Yuni
+c161,Mihara
+c162,Mihara NPC
+c170,Privaty
+c171,Yulha
+c172,Admi
+c180,Guillotine
+c181,Maiden
+c182,Guillotine Winter Slayer
+c183,Maiden Ice Rose
+c190,Ludmilla
+c191,Alice
+c192,Tove
+c193,Neve
+c194,Ludmilla Winter Owner
+c195,Alice Wonderland Bunny
+c200,Rupee
+c201,Yan
+c202,Dolla
+c203,Rupee Winter Shopper
+c210,Exia
+c212,Novel
+c220,Snow White
+c221,Rapunzel
+c222,Scarlet
+c223,Nayuta
+c224,Snow White Innocent Days
+c225,Scarlet Black Shadow
+c226,Rapunzel Pure Grace
+c230,Harran
+c231,Isabel
+c232,Noah
+c233,Dorothy
+c240,Rumani
+c241,Epinel
+c242,Folkwang
+c250,Mass Produce Nikke NPC 1
+c251,Mass Produce Nikke NPC 2
+c252,Mass Produce Nikke NPC 3
+c253,Mass Produce Nikke NPC 4
+c254,Mass Produce Nikke NPC 5
+c255,Mass Produce Nikke NPC 6
+c260,Modernia
+c261,Nihilister
+c262,Liberalio NPC
+c263,Indivilia NPC
+c270,Blanc
+c271,Noir
+c272,Rouge
+c280,Rosanna
+c281,Moran
+c282,Sakura
+c283,Rosanna Chic Ocean
+c284,Sakura Bloom In Summer
+c290,Mana
+c291,Ether
+c300,Soldier EG
+c301,Soldier FA
+c302,Product 08
+c303,Product 12
+c304,iDoll Flower
+c305,iDoll Ocean
+c306,Soldier OW
+c307,Product 23
+c308,iDoll Sun
+c310,Ade
+c311,Cocoa
+c312,Soda
+c313,Privaty Unkind Maid
+c314,Soda Twinkling Bunny
+c320,Bibli
+c321,Marciana
+c330,Crown
+c331,Chime
+c340,Siren
+c341,X
+c342,Pin
+c350,Mast
+c351,Anchor
+c352,Helm
+c353,Helm Aquamarine
+c354,Mast Romantic Maid
+c355,Anchor Innocent Maid
+c360,Milly
+c361,Kilo
+c380,Nero
+c381,Biscuit
+c382,Leona
+c390,Zwei
+c391,Ein
+c392,Rei
+c400,Guilty
+c401,Sin
+c402,Quency
+c403,Quency Escape Queen
+c410,Riff
+c411,Flora
+c412,Trina
+c430,Noise
+c431,Volume
+c432,Aria
+c440,Eyeri NPC
+c441,Avistar NPC
+c450,Naga
+c451,Tia
+c470,Red Hood
+c480,Liveryn NPC
+c481,Fragile NPC
+c490,Hammering NPC
+c491,Drilley NPC
+c500,Elegg
+c501,Trony
+c510,Grave NPC
+c511,Cinderella
+c513,Mermaid NPC
+c514,Grave
+c520,Bready
+c521,Crust
+c550,Bay
+c551,Clay
+c560,Behemoth NPC
+c562,Leviathan NPC
+c570,Black Ark Ranger NPC
+c580,Phantom
+c800,Makima
+c801,Power
+c802,Himeno
+c803,Denji NPC
+c804,Aki NPC
+c810,2B
+c811,A2
+c812,Pascal
+c813,9S NPC
+c820,Rem
+c821,Emilia
+c822,Ram
+c830,Asuka
+c831,Rei Ayanami
+c832,Mari
+c833,Misato
+c834,Rei Ayanami NERV
+c835,Asuka WILLE
+c836,Sakura Suzuhara
+c890,Papillon NPC
+c900,Ingrid NPC
+c901,Syuen
+c902,Mustang NPC
+c903,Andersen NPC
+c904,Enikk NPC
+c905,Rian NPC
+c907,Shifty
+c909,Chatterbox NPC
+c910,Hologram Man NPC
+c911,Adult Man NPC
+c912,Adult Woman NPC
+c913,Little Girl NPC
+c914,Burningum NPC
+c916,Man Commander NPC
+c917,Woman Commander NPC
+c920,Woman Mafia NPC
+c924,Adult Woman NPC 2
+c925,Johan NPC
+c926,Shawn NPC
+c927,Chad NPC
+c928,Einkk NPC
+c929,Cecil NPC
+c934,Annes Mom NPC
+c940,E.H NPC
+c941,Pinne NPC
+c942,Legendary Commander NPC
+c943,Liliweiss NPC
+c944,Cinderella NPC
+c948,Adult Woman NPC 3
+c952,Little Girl NPC 2
+c960,Little Girl NPC 3
+c965,Scarlet Black Shadow NPC
+c966,Rapunzel Pure Grace NPC
+c967,Onsen Girl NPC 1
+c968,Onsen Girl NPC 2
+c971,Rose NPC
+c973,Jien NPC
+c974,Mass Produce Melee Nikke NPC
+c977,Kilo NPC
+c979,Abe NPC
+c980,Hansel NPC
+c981,Gretel NPC
+c982,Red Shoes NPC
+c983,Nadia NPC
+c985,Yuni NPC
+c986,Rapi NPC
+c988,Elf Woman NPC
+c989,Rapi Red Hood NPC
+c990,Rapi hospital NPC
+c991,Deep NPC
+c992,Rapi child NPC
+c993,Mecha Shifty
+c994,Rapi R unit NPC

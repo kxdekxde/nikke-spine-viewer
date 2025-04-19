@@ -56,8 +56,4 @@ If you don't want to install the stuff below you can download this portable vers
 `Rename`: Renames your mods directly from the GUI. It's not necessary to use `_` in this case.
 
 
-## EXE/Portable Version:
-
-Download the .exe version [here](https://www.mediafire.com/file/dkj0lvvnu3rn771/NIKKESpineViewer.7z/file), for this version you just need to install [Zulu JDK](https://cdn.azul.com/zulu/bin/zulu21.40.17-ca-jdk21.0.6-win_x64.msi).
-
 

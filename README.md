@@ -2,6 +2,15 @@
 A simple tool that uses [Esoteric Skeleton Viewers](https://en.esotericsoftware.com/spine-skeleton-viewer) to view [NIKKE](https://nikke-en.com/) Spine animations or any other compatible game that uses Spine.
 
 
+## Portable Version
+If you don't want to install the stuff below you can download this portable version.
+
+
+<p align="center">
+  👉<a href="https://www.mediafire.com/file/dkj0lvvnu3rn771/NIKKESpineViewer.7z/file"><strong>DOWNLOAD HERE</strong></a>👈
+</p>
+
+
 
 ## Requirements to use this tool:
 

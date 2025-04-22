@@ -6,8 +6,9 @@ import subprocess
 import shutil
 import tempfile
 import UnityPy
-import re
 import urllib.request
+import time
+from datetime import datetime
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton,
     QScrollArea, QHBoxLayout, QLabel, QLineEdit,
@@ -16,56 +17,35 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 
-def download_file(url, destination):
-    try:
-        urllib.request.urlretrieve(url, destination)
-        return True
-    except Exception as e:
-        print(f"Error downloading {url}: {e}")
-        return False
+# Constants
+GITHUB_CSV_URL = "https://raw.githubusercontent.com/kxdekxde/nikke-spine-viewer/main/Codes_and_Names.csv"
+LOCAL_CSV_FILE = "Codes_and_Names.csv"
 
-def ensure_viewer_files(app):
-    viewer_dir = os.path.join(os.path.dirname(__file__), "Skeleton Viewer")
-    os.makedirs(viewer_dir, exist_ok=True)
-    
-    required_files = {
-        "skeletonViewer-4.2.40.jar": "https://en.esotericsoftware.com/files/skeletonViewer-4.2.40.jar",
-        "skeletonViewer-4.1.24.jar": "https://en.esotericsoftware.com/files/skeletonViewer-4.1.24.jar",
-        "skeletonViewer-4.0.64.jar": "https://en.esotericsoftware.com/files/skeletonViewer-4.0.64.jar"
-    }
-    
-    missing_files = []
-    for filename, url in required_files.items():
-        filepath = os.path.join(viewer_dir, filename)
-        if not os.path.exists(filepath):
-            missing_files.append((filename, url, filepath))
-    
-    if missing_files:
-        msg = QMessageBox()
-        msg.setWindowTitle("Downloading Required Files")
-        msg.setText("Downloading necessary Spine viewer files...")
-        msg.setStandardButtons(QMessageBox.StandardButton.NoButton)
-        msg.show()
+class SpineViewerController:
+    def __init__(self):
+        self.viewer_process = None
+        self.electron_path = os.path.join("SpineViewer-anosu", "SpineViewer.exe")
         
-        app.processEvents()
-        
-        for filename, url, filepath in missing_files:
-            msg.setInformativeText(f"Downloading {filename}...")
-            app.processEvents()
-            
-            if not download_file(url, filepath):
-                msg.hide()
-                QMessageBox.critical(
-                    None, 
-                    "Download Error",
-                    f"Failed to download required file: {filename}\nPlease check your internet connection.",
-                    QMessageBox.StandardButton.Ok
-                )
+    def launch_viewer(self, skel_path=None):
+        """Launch the Spine viewer with optional skeleton file"""
+        try:
+            if os.path.exists(self.electron_path):
+                if skel_path:
+                    self.viewer_process = subprocess.Popen([self.electron_path, skel_path])
+                else:
+                    self.viewer_process = subprocess.Popen([self.electron_path])
+                return True
+            else:
+                print(f"Spine viewer not found at: {self.electron_path}")
                 return False
-        
-        msg.hide()
-    
-    return True
+        except Exception as e:
+            print(f"Error launching viewer: {e}")
+            return False
+            
+    def close_viewer(self):
+        """Close the viewer"""
+        if self.viewer_process and self.viewer_process.poll() is None:
+            self.viewer_process.terminate()
 
 class AssetExtractor(QThread):
     progress_signal = pyqtSignal(int, str)
@@ -153,9 +133,14 @@ class SpineViewer(QWidget):
         self.settings_file = "spine_viewer_settings.json"
         self.setWindowTitle("NIKKE Spine Viewer")
         self.setGeometry(100, 100, 800, 600)
-        self.viewer_processes = []
+        self.viewer_controller = SpineViewerController()
+        self.current_extraction = None
+        self.progress_dialog = None
 
-        self.character_map = self.load_character_map()
+        # Initialize character map with update check
+        self.character_map = {}
+        self.check_and_update_character_map()
+        
         self.settings = self.load_settings()
 
         self.setStyleSheet("""
@@ -201,19 +186,79 @@ class SpineViewer(QWidget):
 
         self.setLayout(main_layout)
 
-        self.current_extraction = None
-        self.progress_dialog = None
-
         self.verify_mods_folder()
         self.folder_edit.textChanged.connect(self.folder_path_changed)
 
-    def load_character_map(self):
+    def check_and_update_character_map(self):
+        """Check for updates and load the character map"""
+        try:
+            # First check if we need to download the file
+            if not os.path.exists(LOCAL_CSV_FILE):
+                self.download_character_map()
+            else:
+                # Check if GitHub version is newer
+                if self.is_github_version_newer():
+                    self.download_character_map()
+            
+            # Load the character map
+            self.character_map = self.load_local_character_map()
+            
+        except Exception as e:
+            print(f"Error checking/updating character map: {e}")
+            # Fall back to local file if available
+            if os.path.exists(LOCAL_CSV_FILE):
+                self.character_map = self.load_local_character_map()
+
+    def is_github_version_newer(self):
+        """Check if the GitHub version is newer than local"""
+        try:
+            # Get local file modification time
+            local_mtime = os.path.getmtime(LOCAL_CSV_FILE)
+            
+            # Get GitHub file last modified time
+            req = urllib.request.Request(GITHUB_CSV_URL, method='HEAD')
+            with urllib.request.urlopen(req) as response:
+                remote_mtime = response.headers.get('Last-Modified')
+                if remote_mtime:
+                    remote_dt = datetime.strptime(remote_mtime, '%a, %d %b %Y %H:%M:%S %Z')
+                    return remote_dt.timestamp() > local_mtime
+        except Exception as e:
+            print(f"Error checking GitHub version: {e}")
+        return False
+
+    def download_character_map(self):
+        """Download the character map from GitHub"""
+        try:
+            print("Downloading updated character map...")
+            temp_file = LOCAL_CSV_FILE + ".tmp"
+            urllib.request.urlretrieve(GITHUB_CSV_URL, temp_file)
+            
+            # Verify the download
+            if os.path.getsize(temp_file) > 0:
+                # Replace existing file
+                if os.path.exists(LOCAL_CSV_FILE):
+                    os.remove(LOCAL_CSV_FILE)
+                os.rename(temp_file, LOCAL_CSV_FILE)
+                print("Character map updated successfully")
+                return True
+            else:
+                os.remove(temp_file)
+                print("Downloaded empty file, keeping existing")
+        except Exception as e:
+            print(f"Error downloading character map: {e}")
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+        return False
+
+    def load_local_character_map(self):
+        """Load the character map from local file"""
         character_map = {}
         try:
-            with open("Codes_and_Names.csv", newline='', encoding='utf-8') as csvfile:
-                reader = csv.DictReader(csvfile)
-                for row in reader:
-                    character_map[row['ID']] = row['CHARACTER']
+            if os.path.exists(LOCAL_CSV_FILE):
+                with open(LOCAL_CSV_FILE, newline='', encoding='utf-8') as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    for row in reader:
+                        character_map[row['ID']] = row['CHARACTER']
         except Exception as e:
             print(f"Error loading character map: {e}")
         return character_map
@@ -251,7 +296,7 @@ class SpineViewer(QWidget):
     def load_settings(self):
         default_settings = {
             "mods_folder": "",
-            "zulu_path": r"C:\\Program Files\\Zulu\\zulu-21\\bin\\javaw.exe"
+            "electron_path": os.path.join("SpineViewer-anosu", "SpineViewer.exe")
         }
         try:
             if os.path.exists(self.settings_file):
@@ -267,61 +312,6 @@ class SpineViewer(QWidget):
                 json.dump(self.settings, f, indent=4)
         except Exception as e:
             print(f"Error saving settings: {e}")
-
-    def detect_spine_version(self, skel_path):
-        try:
-            with open(skel_path, 'rb') as f:
-                header = f.read(100).decode('ascii', errors='ignore')
-                version_match = re.search(r'(\d+\.\d+)\.\d+', header)
-                if version_match:
-                    return version_match.group(1)
-        except Exception as e:
-            print(f"Error detecting Spine version: {e}")
-        return None
-
-    def get_viewer_for_version(self, spine_version):
-        viewer_dir = os.path.join(os.path.dirname(__file__), "Skeleton Viewer")
-        if not os.path.exists(viewer_dir):
-            os.makedirs(viewer_dir, exist_ok=True)
-            
-        available_versions = []
-        for file in sorted(os.listdir(viewer_dir)):
-            if file.startswith("skeletonViewer-") and file.endswith(".jar"):
-                version_num = file[14:-4]
-                available_versions.append((version_num, os.path.join(viewer_dir, file)))
-        
-        if not available_versions:
-            return None
-            
-        if not spine_version:
-            return available_versions[-1][1]
-        
-        for ver_num, path in available_versions:
-            if ver_num.startswith(spine_version):
-                return path
-        
-        try:
-            target_major, target_minor = map(int, spine_version.split('.'))
-            best_match = None
-            best_diff = float('inf')
-            
-            for ver_num, path in available_versions:
-                try:
-                    parts = ver_num.split('.')
-                    if len(parts) >= 2:
-                        major = int(parts[0])
-                        minor = int(parts[1])
-                        diff = abs(major - target_major) * 10 + abs(minor - target_minor)
-                        
-                        if diff < best_diff:
-                            best_diff = diff
-                            best_match = path
-                except:
-                    continue
-            
-            return best_match if best_match else available_versions[-1][1]
-        except:
-            return available_versions[-1][1]
 
     def verify_mods_folder(self):
         if not self.settings.get("mods_folder") or not os.path.exists(self.settings["mods_folder"]):
@@ -479,42 +469,26 @@ class SpineViewer(QWidget):
                 )
 
     def preview_animation(self, skel_path):
-        spine_version = self.detect_spine_version(skel_path)
-        viewer_path = self.get_viewer_for_version(spine_version)
-
-        if not viewer_path:
+        # Find the corresponding atlas file (just for verification)
+        atlas_path = skel_path.replace('.skel', '.atlas')
+        if not os.path.exists(atlas_path):
             QMessageBox.critical(
                 self, "Error",
-                "No skeleton viewer found in 'Skeleton Viewer' folder",
+                f"Could not find atlas file at:\n{atlas_path}",
                 QMessageBox.StandardButton.Ok
             )
             return
-
-        zulu_javaw = self.settings.get("zulu_path", "javaw")
-
-        try:
-            if sys.platform == 'win32':
-                startupinfo = subprocess.STARTUPINFO()
-                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                subprocess.Popen(
-                    [zulu_javaw, "-jar", viewer_path, skel_path],
-                    creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP,
-                    startupinfo=startupinfo
-                )
-            else:
-                subprocess.Popen(
-                    [zulu_javaw, "-jar", viewer_path, skel_path],
-                    start_new_session=True
-                )
             
-            QTimer.singleShot(500, self.bring_to_front)
-            
-        except Exception as e:
+        # Launch the viewer with the skeleton file
+        if not self.viewer_controller.launch_viewer(skel_path):
             QMessageBox.critical(
                 self, "Error",
-                f"Failed to launch viewer:\n{str(e)}",
+                "Failed to launch Spine viewer",
                 QMessageBox.StandardButton.Ok
             )
+            return
+            
+        self.bring_to_front()
 
     def bring_to_front(self):
         self.raise_()
@@ -522,6 +496,7 @@ class SpineViewer(QWidget):
         self.showNormal()
 
     def closeEvent(self, event):
+        self.viewer_controller.close_viewer()
         shutil.rmtree(self.get_spine_assets_dir(), ignore_errors=True)
         event.accept()
 
@@ -530,9 +505,6 @@ if __name__ == "__main__":
     
     if os.path.exists("icon.png"):
         app.setWindowIcon(QIcon("icon.png"))
-    
-    if not ensure_viewer_files(app):
-        sys.exit(1)
     
     viewer = SpineViewer()
     viewer.show()

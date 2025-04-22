@@ -54,5 +54,16 @@ If you don't want to install the stuff below to use the scripts you can download
 
 `Rename`: Renames your mods directly from the GUI. It's not necessary to use `_` in this case.
 
+## How to build:
+```
+pyinstaller --onefile --windowed --icon="icon.ico" ^
+--add-data "icon.png;." ^
+--add-data "spine_viewer_settings.json;." ^
+--add-data "Codes_and_Names.csv;." ^
+--add-data "%USERPROFILE%\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\UnityPy\\resources;UnityPy/resources" ^
+--additional-hooks-dir=. ^
+NIKKESpineViewer.pyw
+```
+
 
 

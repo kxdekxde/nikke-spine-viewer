@@ -2,7 +2,7 @@
 A simple tool that uses a modified version of [anosu's Spine Viewer](https://github.com/anosu/Spine-Viewer) to view [NIKKE](https://nikke-en.com/) Spine animations or any other compatible game that uses Spine.
 
 
-## Portable Version
+## Portable Version:
 If you don't want to install the stuff below to use the scripts you can download this portable version ready for usage.
 
 

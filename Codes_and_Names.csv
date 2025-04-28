@@ -33,6 +33,9 @@ c095,Eunhwa NPC
 c100,Laplace
 c101,Drake
 c102,Maxwell
+c103,Laplace OverSpec
+c104,Drake OverSpec
+c105,Maxwell OverSpec
 c110,Crow
 c111,Jackal
 c112,Viper
@@ -49,7 +52,7 @@ c151,Pia
 c152,Forte
 c160,Yuni
 c161,Mihara
-c162,Mihara NPC
+c162,Mihara Bonding Chain
 c170,Privaty
 c171,Yulha
 c172,Admi
@@ -161,16 +164,20 @@ c500,Elegg
 c501,Trony
 c510,Grave NPC
 c511,Cinderella
-c513,Mermaid NPC
+c513,Little Mermaid
 c514,Grave
 c520,Bready
 c521,Crust
 c550,Bay
 c551,Clay
 c560,Behemoth NPC
+c561,Ziz NPC
 c562,Leviathan NPC
 c570,Black Ark Ranger NPC
 c580,Phantom
+c590,Mori
+c600,Mint NPC
+c601,Prika NPC
 c800,Makima
 c801,Power
 c802,Himeno

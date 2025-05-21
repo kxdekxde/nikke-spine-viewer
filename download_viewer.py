@@ -1,4 +1,5 @@
 import os
+import shutil
 import requests
 import zipfile
 from tqdm import tqdm
@@ -9,11 +10,26 @@ output_folder = "SpineViewer-anosu"
 zip_filename = "SpineViewer.zip"
 zip_path = os.path.join(output_folder, zip_filename)
 
-# Ensure output folder exists
-os.makedirs(output_folder, exist_ok=True)
+# Function to clean a folder (remove all contents)
+def clean_folder(folder_path):
+    if os.path.exists(folder_path):
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f"[!] Failed to delete {file_path}: {e}")
+    else:
+        os.makedirs(folder_path)
 
-# Skip download if the zip already exists
+# Check if the zip file is already there
 if not os.path.exists(zip_path):
+    print("[*] Cleaning folder before downloading...")
+    clean_folder(output_folder)
+
     print(f"[*] Downloading Viewer...")
     response = requests.get(direct_url, stream=True)
     response.raise_for_status()

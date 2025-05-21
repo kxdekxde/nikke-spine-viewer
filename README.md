@@ -52,5 +52,5 @@ Better style on the GUI, plus this version is to be used with the scripts. And t
 1. Double-click on _NIKKESpineViewer.bat_.
 2. The viewer will ask the user for the path to NMM "mods" folder, click OK on the message box.
 3. Click on `Browse...` and navigate to your NMM mods folder and select it.
-4. The viewer will show the list with your mods, from here you can preview them or rename them.
+4. The viewer will show the list with your mods, from there you can preview them or rename them.
 5. You can create a shortcut to the viewer on your Desktop with _CREATE_SHORTCUT.bat_.

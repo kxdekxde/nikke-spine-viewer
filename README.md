@@ -37,11 +37,10 @@ If you don't want to install the stuff below to use the scripts you can download
 
 # Update 2.0 Version:
 
-Better style on the GUI. Plus this version is to be used with the scripts.
+Better style on the GUI, plus this version is to be used with the scripts. And the list of characters is updated automatically now.
 
 <img src="https://files.catbox.moe/9kyxfv.png" width="700"/>
 
-The list of characters is updated automatically now.
 
 ## Requirements to use the scripts:
 

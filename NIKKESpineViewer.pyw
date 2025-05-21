@@ -6,46 +6,23 @@ import subprocess
 import shutil
 import tempfile
 import UnityPy
+import re
 import urllib.request
-import time
-from datetime import datetime
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton,
     QScrollArea, QHBoxLayout, QLabel, QLineEdit,
     QFileDialog, QMessageBox, QProgressDialog
 )
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QColor, QPalette
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 
-# Constants
-GITHUB_CSV_URL = "https://raw.githubusercontent.com/kxdekxde/nikke-spine-viewer/main/Codes_and_Names.csv"
-LOCAL_CSV_FILE = "Codes_and_Names.csv"
-
-class SpineViewerController:
-    def __init__(self):
-        self.viewer_process = None
-        self.electron_path = os.path.join("SpineViewer-anosu", "SpineViewer.exe")
-        
-    def launch_viewer(self, skel_path=None):
-        """Launch the Spine viewer with optional skeleton file"""
-        try:
-            if os.path.exists(self.electron_path):
-                if skel_path:
-                    self.viewer_process = subprocess.Popen([self.electron_path, skel_path])
-                else:
-                    self.viewer_process = subprocess.Popen([self.electron_path])
-                return True
-            else:
-                print(f"Spine viewer not found at: {self.electron_path}")
-                return False
-        except Exception as e:
-            print(f"Error launching viewer: {e}")
-            return False
-            
-    def close_viewer(self):
-        """Close the viewer"""
-        if self.viewer_process and self.viewer_process.poll() is None:
-            self.viewer_process.terminate()
+def download_file(url, destination):
+    try:
+        urllib.request.urlretrieve(url, destination)
+        return True
+    except Exception as e:
+        print(f"Error downloading {url}: {e}")
+        return False
 
 class AssetExtractor(QThread):
     progress_signal = pyqtSignal(int, str)
@@ -133,25 +110,15 @@ class SpineViewer(QWidget):
         self.settings_file = "spine_viewer_settings.json"
         self.setWindowTitle("NIKKE Spine Viewer")
         self.setGeometry(100, 100, 800, 600)
-        self.viewer_controller = SpineViewerController()
-        self.current_extraction = None
-        self.progress_dialog = None
+        self.viewer_processes = []
 
-        # Initialize character map with update check
-        self.character_map = {}
-        self.check_and_update_character_map()
-        
+        # Check for CSV updates before loading
+        self.check_csv_updates()
+        self.character_map = self.load_character_map()
         self.settings = self.load_settings()
 
-        self.setStyleSheet("""
-            QWidget { background-color: #252525; color: white; }
-            QPushButton { background-color: #444; border: 1px solid #555; padding: 5px; min-width: 80px; }
-            QPushButton:hover { background-color: #555; }
-            QScrollArea { border: none; }
-            QLineEdit { background-color: #333; color: white; padding: 5px; border: 1px solid #555; }
-            QProgressDialog { background-color: #252525; color: white; }
-            QProgressBar { background-color: #333; color: white; border: 1px solid #555; text-align: center; }
-        """)
+        # Apply Windows 11 dark theme
+        self.set_windows11_dark_theme()
 
         main_layout = QVBoxLayout()
 
@@ -186,79 +153,201 @@ class SpineViewer(QWidget):
 
         self.setLayout(main_layout)
 
+        self.current_extraction = None
+        self.progress_dialog = None
+
         self.verify_mods_folder()
         self.folder_edit.textChanged.connect(self.folder_path_changed)
 
-    def check_and_update_character_map(self):
-        """Check for updates and load the character map"""
+    def check_csv_updates(self):
+        """Check for updates to Codes_and_Names.csv from GitHub"""
+        github_url = "https://raw.githubusercontent.com/kxdekxde/nikke-spine-viewer/main/Codes_and_Names.csv"
+        local_path = "Codes_and_Names.csv"
+        
         try:
-            # First check if we need to download the file
-            if not os.path.exists(LOCAL_CSV_FILE):
-                self.download_character_map()
-            else:
-                # Check if GitHub version is newer
-                if self.is_github_version_newer():
-                    self.download_character_map()
-            
-            # Load the character map
-            self.character_map = self.load_local_character_map()
-            
+            # Download the file to a temporary location
+            temp_path = os.path.join(tempfile.gettempdir(), "temp_Codes_and_Names.csv")
+            if download_file(github_url, temp_path):
+                # Compare with local file if it exists
+                if os.path.exists(local_path):
+                    with open(local_path, 'r', encoding='utf-8') as local_file:
+                        local_content = local_file.read()
+                    with open(temp_path, 'r', encoding='utf-8') as temp_file:
+                        remote_content = temp_file.read()
+                    
+                    if local_content != remote_content:
+                        # Files are different, replace local with remote
+                        shutil.copy(temp_path, local_path)
+                        print("Updated Codes_and_Names.csv from GitHub")
+                else:
+                    # Local file doesn't exist, create it
+                    shutil.copy(temp_path, local_path)
+                    print("Downloaded Codes_and_Names.csv from GitHub")
+                
+                # Clean up temporary file
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
         except Exception as e:
-            print(f"Error checking/updating character map: {e}")
-            # Fall back to local file if available
-            if os.path.exists(LOCAL_CSV_FILE):
-                self.character_map = self.load_local_character_map()
+            print(f"Error checking for CSV updates: {e}")
 
-    def is_github_version_newer(self):
-        """Check if the GitHub version is newer than local"""
-        try:
-            # Get local file modification time
-            local_mtime = os.path.getmtime(LOCAL_CSV_FILE)
-            
-            # Get GitHub file last modified time
-            req = urllib.request.Request(GITHUB_CSV_URL, method='HEAD')
-            with urllib.request.urlopen(req) as response:
-                remote_mtime = response.headers.get('Last-Modified')
-                if remote_mtime:
-                    remote_dt = datetime.strptime(remote_mtime, '%a, %d %b %Y %H:%M:%S %Z')
-                    return remote_dt.timestamp() > local_mtime
-        except Exception as e:
-            print(f"Error checking GitHub version: {e}")
-        return False
+    def set_windows11_dark_theme(self):
+        """Apply Windows 11 style dark theme to the application"""
+        app = QApplication.instance()
+        
+        # Enable dark title bar on Windows
+        if sys.platform == "win32":
+            try:
+                from ctypes import windll, byref, sizeof, c_int
+                hwnd = int(self.winId())
+                for attribute in [19, 20]:  # Try both dark mode attributes
+                    try:
+                        value = c_int(1)
+                        windll.dwmapi.DwmSetWindowAttribute(
+                            hwnd,
+                            attribute,
+                            byref(value),
+                            sizeof(value)
+                        )
+                    except Exception as e:
+                        print(f"Dark title bar not supported (attribute {attribute}): {e}")
+            except Exception as e:
+                print(f"Dark title bar initialization failed: {e}")
 
-    def download_character_map(self):
-        """Download the character map from GitHub"""
-        try:
-            print("Downloading updated character map...")
-            temp_file = LOCAL_CSV_FILE + ".tmp"
-            urllib.request.urlretrieve(GITHUB_CSV_URL, temp_file)
-            
-            # Verify the download
-            if os.path.getsize(temp_file) > 0:
-                # Replace existing file
-                if os.path.exists(LOCAL_CSV_FILE):
-                    os.remove(LOCAL_CSV_FILE)
-                os.rename(temp_file, LOCAL_CSV_FILE)
-                print("Character map updated successfully")
-                return True
-            else:
-                os.remove(temp_file)
-                print("Downloaded empty file, keeping existing")
-        except Exception as e:
-            print(f"Error downloading character map: {e}")
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-        return False
+        # Create dark palette with correct parameter order
+        palette = QPalette()
+        # Regular colors
+        palette.setColor(QPalette.ColorRole.Window, QColor(32, 32, 32))
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(240, 240, 240))
+        palette.setColor(QPalette.ColorRole.Base, QColor(25, 25, 25))
+        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(53, 53, 53))
+        palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(53, 53, 53))
+        palette.setColor(QPalette.ColorRole.ToolTipText, QColor(240, 240, 240))
+        palette.setColor(QPalette.ColorRole.Text, QColor(240, 240, 240))
+        palette.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
+        palette.setColor(QPalette.ColorRole.ButtonText, QColor(240, 240, 240))
+        palette.setColor(QPalette.ColorRole.BrightText, QColor(255, 0, 0))
+        palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
+        palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
+        palette.setColor(QPalette.ColorRole.HighlightedText, QColor(240, 240, 240))
+        palette.setColor(QPalette.ColorRole.PlaceholderText, QColor(120, 120, 120))
 
-    def load_local_character_map(self):
-        """Load the character map from local file"""
+        # Disabled colors - correct parameter order
+        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, QColor(127, 127, 127))
+        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor(127, 127, 127))
+        palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, QColor(127, 127, 127))
+
+        app.setPalette(palette)
+
+        # Set style sheet for additional styling with blue scrollbar
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #202020;
+                color: #f0f0f0;
+                font-family: "Segoe UI", Arial, sans-serif;
+                font-size: 9pt;
+            }
+            QPushButton {
+                background-color: #2d2d2d;
+                border: 1px solid #3d3d3d;
+                border-radius: 4px;
+                padding: 5px 12px;
+                min-width: 80px;
+            }
+            QPushButton:hover {
+                background-color: #3d3d3d;
+                border: 1px solid #4d4d4d;
+            }
+            QPushButton:pressed {
+                background-color: #1d1d1d;
+            }
+            QScrollArea {
+                border: none;
+            }
+            QLineEdit {
+                background-color: #252525;
+                color: #f0f0f0;
+                padding: 5px;
+                border: 1px solid #3d3d3d;
+                border-radius: 4px;
+                selection-background-color: #3a6ea5;
+                selection-color: #ffffff;
+            }
+            QLineEdit:disabled {
+                background-color: #1a1a1a;
+                color: #7f7f7f;
+            }
+            QProgressDialog {
+                background-color: #202020;
+                color: #f0f0f0;
+            }
+            QProgressBar {
+                background-color: #252525;
+                color: #f0f0f0;
+                border: 1px solid #3d3d3d;
+                border-radius: 4px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #3a6ea5;
+                border-radius: 3px;
+            }
+            QLabel {
+                color: #f0f0f0;
+            }
+            QMessageBox {
+                background-color: #202020;
+            }
+            QMessageBox QLabel {
+                color: #f0f0f0;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background: #252525;
+                width: 10px;
+                margin: 0px 0px 0px 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: #1a4b8c;
+                min-height: 20px;
+                border-radius: 5px;
+            }
+            QScrollBar::add-line:vertical {
+                border: none;
+                background: none;
+                height: 0px;
+                subcontrol-position: bottom;
+                subcontrol-origin: margin;
+            }
+            QScrollBar::sub-line:vertical {
+                border: none;
+                background: none;
+                height: 0px;
+                subcontrol-position: top;
+                subcontrol-origin: margin;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background: none;
+            }
+            QScrollBar:horizontal {
+                border: none;
+                background: #252525;
+                height: 10px;
+                margin: 0px 0px 0px 0px;
+            }
+            QScrollBar::handle:horizontal {
+                background: #1a4b8c;
+                min-width: 20px;
+                border-radius: 5px;
+            }
+        """)
+
+    def load_character_map(self):
         character_map = {}
         try:
-            if os.path.exists(LOCAL_CSV_FILE):
-                with open(LOCAL_CSV_FILE, newline='', encoding='utf-8') as csvfile:
-                    reader = csv.DictReader(csvfile)
-                    for row in reader:
-                        character_map[row['ID']] = row['CHARACTER']
+            with open("Codes_and_Names.csv", newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    character_map[row['ID']] = row['CHARACTER']
         except Exception as e:
             print(f"Error loading character map: {e}")
         return character_map
@@ -295,8 +384,7 @@ class SpineViewer(QWidget):
 
     def load_settings(self):
         default_settings = {
-            "mods_folder": "",
-            "electron_path": os.path.join("SpineViewer-anosu", "SpineViewer.exe")
+            "mods_folder": ""
         }
         try:
             if os.path.exists(self.settings_file):
@@ -339,6 +427,8 @@ class SpineViewer(QWidget):
     def add_mod_item(self, original_name, file_path):
         item_widget = QWidget()
         item_layout = QHBoxLayout(item_widget)
+        item_layout.setContentsMargins(5, 5, 5, 5)
+        item_layout.setSpacing(10)
 
         preview_btn = QPushButton("Preview")
         preview_btn.setFixedWidth(100)
@@ -346,7 +436,7 @@ class SpineViewer(QWidget):
         item_layout.addWidget(preview_btn)
 
         self.name_edit = QLineEdit(self.format_display_name(original_name))
-        self.name_edit.setStyleSheet("color: white;")
+        self.name_edit.setStyleSheet("color: #f0f0f0;")
         self.name_edit.setMinimumWidth(300)
         self.name_edit.setProperty("original_path", file_path)
         item_layout.addWidget(self.name_edit)
@@ -354,7 +444,7 @@ class SpineViewer(QWidget):
         character_id = self.extract_id_from_filename(original_name)
         character_name = self.character_map.get(character_id, "Unknown")
         character_label = QLabel(character_name)
-        character_label.setStyleSheet("color: #999;")
+        character_label.setStyleSheet("color: #a6a6a6;")
         character_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         character_label.setMinimumWidth(150)
         item_layout.addWidget(character_label)
@@ -415,7 +505,7 @@ class SpineViewer(QWidget):
             QMessageBox.critical(self, "Error", f"Failed to rename file: {str(e)}", QMessageBox.StandardButton.Ok)
 
     def preview_file(self, file_path):
-        if file_path.endswith('.skel'):
+        if file_path.endswith('.skel') or file_path.endswith('.json'):
             self.preview_animation(file_path)
         else:
             self.extract_and_preview(file_path)
@@ -423,9 +513,9 @@ class SpineViewer(QWidget):
     def extract_and_preview(self, bundle_path):
         spine_assets_dir = self.get_spine_assets_dir()
         self.progress_dialog = QProgressDialog(
-            f"Extracting assets from {os.path.basename(bundle_path)}...",
+            f"Loading assets from {os.path.basename(bundle_path)}...",
             "Cancel", 0, 100, self)
-        self.progress_dialog.setWindowTitle("Extracting Assets")
+        self.progress_dialog.setWindowTitle("Loading Assets")
         self.progress_dialog.setWindowModality(Qt.WindowModality.WindowModal)
         self.progress_dialog.setAutoReset(False)
         self.progress_dialog.canceled.connect(self.cancel_extraction)
@@ -468,27 +558,33 @@ class SpineViewer(QWidget):
                     QMessageBox.StandardButton.Ok
                 )
 
-    def preview_animation(self, skel_path):
-        # Find the corresponding atlas file (just for verification)
-        atlas_path = skel_path.replace('.skel', '.atlas')
-        if not os.path.exists(atlas_path):
+    def preview_animation(self, animation_path):
+        # Get the path to the Spine Viewer executable
+        viewer_path = os.path.join(os.path.dirname(__file__), "SpineViewer-anosu", "SpineViewer.exe")
+        
+        if not os.path.exists(viewer_path):
             QMessageBox.critical(
                 self, "Error",
-                f"Could not find atlas file at:\n{atlas_path}",
+                f"Spine Viewer not found at path: {viewer_path}",
                 QMessageBox.StandardButton.Ok
             )
             return
+
+        try:
+            # Run the Spine Viewer with the animation file
+            subprocess.Popen(
+                [viewer_path, animation_path],
+                shell=True
+            )
             
-        # Launch the viewer with the skeleton file
-        if not self.viewer_controller.launch_viewer(skel_path):
+            QTimer.singleShot(500, self.bring_to_front)
+            
+        except Exception as e:
             QMessageBox.critical(
                 self, "Error",
-                "Failed to launch Spine viewer",
+                f"Failed to launch Spine Viewer:\n{str(e)}",
                 QMessageBox.StandardButton.Ok
             )
-            return
-            
-        self.bring_to_front()
 
     def bring_to_front(self):
         self.raise_()
@@ -496,7 +592,6 @@ class SpineViewer(QWidget):
         self.showNormal()
 
     def closeEvent(self, event):
-        self.viewer_controller.close_viewer()
         shutil.rmtree(self.get_spine_assets_dir(), ignore_errors=True)
         event.accept()
 

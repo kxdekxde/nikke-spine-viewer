@@ -10,4 +10,9 @@ Requests==2.32.3
 UnityPy==1.21.0
 tqdm==4.66.5
 PyQt6==6.8.1
+certifi==2024.2.2
+charset-normalizer==3.3.2
+gazpacho==1.1
+idna==3.6
+urllib3==2.2.1
 

@@ -1,6 +1,6 @@
 # NIKKE Spine Viewer
 A simple tool that uses a modified version of [anosu's Spine Viewer](https://github.com/anosu/Spine-Viewer) to view [NIKKE](https://nikke-en.com/) Spine animations or any other compatible game that uses Spine.
-
+The script to download the viewer uses [NicKoehler's mediafire bulk downloader](https://github.com/NicKoehler/mediafire_bulk_downloader).
 
 ## Portable Version (old GUI):
 If you don't want to install the stuff below to use the scripts you can download this portable version ready for usage.

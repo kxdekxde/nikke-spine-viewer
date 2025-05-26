@@ -40,12 +40,24 @@ if exist requirements.txt (
     echo requirements.txt not found. Skipping dependency installation.
 )
 
+REM Run MEDIAFIRE_DOWNLOADER.bat
+if exist MEDIAFIRE_DOWNLOADER.bat (
+    echo Running MEDIAFIRE_DOWNLOADER.bat...
+    call MEDIAFIRE_DOWNLOADER.bat
+    if %errorlevel% neq 0 (
+        echo An error occurred while running MEDIAFIRE_DOWNLOADER.bat.
+        exit /b
+    )
+) else (
+    echo MEDIAFIRE_DOWNLOADER.bat not found.
+    exit /b
+)
 
-REM Run download_viewer.py
-echo Running download_viewer.py...
-python download_viewer.py
+REM Run extract_viewer.py
+echo Running extract_viewer.py...
+python extract_viewer.py
 if %errorlevel% neq 0 (
-    echo An error occurred while running download_viewer.py.
+    echo An error occurred while running extract_viewer.py.
     exit /b
 )
 

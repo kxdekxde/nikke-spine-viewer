@@ -6,16 +6,17 @@ import zipfile
 output_folder = "SpineViewer-anosu"
 zip_filename = "SpineViewer.zip"
 zip_path = os.path.join(output_folder, zip_filename)
+files_to_keep = [zip_filename, "LICENSE.txt"]  # Files to skip during cleaning
 
-def clean_folder_keep_zip(folder_path, zip_to_keep):
-    """Clean folder contents except for the specified zip file"""
+def clean_folder_keep_files(folder_path, keep_files):
+    """Clean folder contents except for the specified files"""
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
         return
     
     for filename in os.listdir(folder_path):
-        if filename == zip_to_keep:
-            continue  # Skip the zip file we want to keep
+        if filename in keep_files:
+            continue  # Skip files we want to keep
         
         file_path = os.path.join(folder_path, filename)
         try:
@@ -33,9 +34,9 @@ if not os.path.exists(zip_path):
 else:
     print(f"[✓] ZIP file found at {zip_path}. Cleaning folder before extraction...")
 
-# Clean the folder (keep only the zip file)
-clean_folder_keep_zip(output_folder, zip_filename)
-print("[✓] Folder cleaned (only .zip file remains)")
+# Clean the folder (keep only the zip file and LICENSE.txt)
+clean_folder_keep_files(output_folder, files_to_keep)
+print("[✓] Folder cleaned (kept .zip file and LICENSE.txt)")
 
 # Extract the zip
 print("[*] Extracting contents...")

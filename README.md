@@ -39,9 +39,9 @@ If you don't want to install the stuff below to use the scripts you can download
 
 # Update 2.0 Version:
 
-Better style on the GUI, plus this version is to be used with the scripts. And the list of characters is updated automatically now.
+Better style on the GUI, this version works as script instead. The list of characters is updated automatically now; and I added a search bar to filter your mods list by author, character, standing, aim, cover, etc.
 
-<img src="https://files.catbox.moe/9kyxfv.png" width="700"/>
+<img src="https://files.catbox.moe/fatv79.png" width="700"/>
 
 
 ## Requirements to use the scripts:

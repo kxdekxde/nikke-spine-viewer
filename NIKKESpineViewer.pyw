@@ -122,6 +122,7 @@ class SpineViewer(QWidget):
 
         main_layout = QVBoxLayout()
 
+        # Mods folder selection bar
         folder_layout = QHBoxLayout()
         folder_layout.addWidget(QLabel("Mods Folder:"))
 
@@ -141,6 +142,21 @@ class SpineViewer(QWidget):
 
         main_layout.addLayout(folder_layout)
 
+        # Search bar for filtering mods
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(QLabel("Search:"))
+
+        self.search_edit = QLineEdit()
+        self.search_edit.setPlaceholderText("Filter mods by name or character...")
+        self.search_edit.textChanged.connect(self.filter_mods)
+        search_layout.addWidget(self.search_edit)
+
+        clear_btn = QPushButton("Clear")
+        clear_btn.clicked.connect(self.clear_search)
+        search_layout.addWidget(clear_btn)
+
+        main_layout.addLayout(search_layout)
+
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
 
@@ -155,6 +171,7 @@ class SpineViewer(QWidget):
 
         self.current_extraction = None
         self.progress_dialog = None
+        self.all_mod_items = []  # To store all mod items for filtering
 
         self.verify_mods_folder()
         self.folder_edit.textChanged.connect(self.folder_path_changed)
@@ -413,16 +430,22 @@ class SpineViewer(QWidget):
 
     def load_mods(self):
         mods_folder = self.settings.get("mods_folder", "")
+        # Clear existing items and the all_mod_items list
         while self.scroll_layout.count():
             item = self.scroll_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
+        self.all_mod_items = []
+        
         if mods_folder and os.path.exists(mods_folder):
             for item in sorted(os.listdir(mods_folder)):
                 item_path = os.path.join(mods_folder, item)
                 if os.path.isdir(item_path) or item.startswith('.') or item.endswith('.json'):
                     continue
                 self.add_mod_item(item, item_path)
+        
+        # Store all mod items for filtering
+        self.all_mod_items = [self.scroll_layout.itemAt(i).widget() for i in range(self.scroll_layout.count())]
 
     def add_mod_item(self, original_name, file_path):
         item_widget = QWidget()
@@ -435,11 +458,11 @@ class SpineViewer(QWidget):
         preview_btn.clicked.connect(lambda _, p=file_path: self.preview_file(p))
         item_layout.addWidget(preview_btn)
 
-        self.name_edit = QLineEdit(self.format_display_name(original_name))
-        self.name_edit.setStyleSheet("color: #f0f0f0;")
-        self.name_edit.setMinimumWidth(300)
-        self.name_edit.setProperty("original_path", file_path)
-        item_layout.addWidget(self.name_edit)
+        name_edit = QLineEdit(self.format_display_name(original_name))
+        name_edit.setStyleSheet("color: #f0f0f0;")
+        name_edit.setMinimumWidth(300)
+        name_edit.setProperty("original_path", file_path)
+        item_layout.addWidget(name_edit)
 
         character_id = self.extract_id_from_filename(original_name)
         character_name = self.character_map.get(character_id, "Unknown")
@@ -455,6 +478,38 @@ class SpineViewer(QWidget):
         item_layout.addWidget(rename_btn)
 
         self.scroll_layout.addWidget(item_widget)
+        
+        # Store additional properties for filtering
+        item_widget.setProperty("display_name", self.format_display_name(original_name))
+        item_widget.setProperty("character_name", character_name)
+
+    def filter_mods(self):
+        search_text = self.search_edit.text().lower()
+        
+        if not search_text:
+            # Show all items if search is empty
+            for i in range(self.scroll_layout.count()):
+                item = self.scroll_layout.itemAt(i)
+                if item.widget():
+                    item.widget().show()
+            return
+            
+        # Hide items that don't match the search
+        for i in range(self.scroll_layout.count()):
+            item = self.scroll_layout.itemAt(i)
+            if item.widget():
+                widget = item.widget()
+                display_name = widget.property("display_name").lower()
+                character_name = widget.property("character_name").lower()
+                
+                if search_text in display_name or search_text in character_name:
+                    widget.show()
+                else:
+                    widget.hide()
+
+    def clear_search(self):
+        self.search_edit.clear()
+        self.filter_mods()
 
     def rename_file(self):
         btn = self.sender()
